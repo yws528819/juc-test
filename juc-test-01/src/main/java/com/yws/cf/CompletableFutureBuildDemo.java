@@ -19,6 +19,7 @@ public class CompletableFutureBuildDemo {
         }, threadPool);
         System.out.println(completableFuture.get());*/
 
+        //有返回值
         CompletableFuture<String> completableFuture = CompletableFuture.supplyAsync(() -> {
             System.out.println(Thread.currentThread().getName());
             //暂停几秒

@@ -1,12 +1,11 @@
 package com.yws.cf;
 
-import lombok.Data;
 import lombok.Getter;
 import org.apache.commons.lang3.time.StopWatch;
-import sun.nio.ch.Net;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -16,6 +15,27 @@ public class CompletableFutureMallDemo {
             new NetMall("jd"),
             new NetMall("dangdang"),
             new NetMall("taobao"));
+
+
+    /**'
+     * CompletableFuture异步任务同时搜查
+     * @param list
+     * @param productName
+     * @return
+     */
+    public static List<String> getPriceByCompletableFuture(List<NetMall> list, String productName) {
+        return list
+                .stream()
+                .map(netMall ->
+                        CompletableFuture.supplyAsync(() ->
+                            String.format(productName + " in %s price is %.2f", netMall.getNetMallName(), netMall.calcPrice(productName)))
+        )
+                .collect(Collectors.toList())
+                .stream()
+                .map(s -> s.join())
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * 一家家搜查
@@ -36,8 +56,18 @@ public class CompletableFutureMallDemo {
 
         //创建后立即start，常用
         StopWatch watch = StopWatch.createStarted();
+
         List<String> mysql = getPrice(list, "mysql");
         mysql.stream().forEach(e -> System.out.println(e));
+
+        System.out.println("花费的时间>>" + watch.getTime() + "ms");
+
+        //复位后, 重新计时
+        watch.reset();
+        watch.start();
+
+        List<String> mysql2 = getPriceByCompletableFuture(list, "mysql");
+        mysql2.stream().forEach(e -> System.out.println(e));
 
         System.out.println("花费的时间>>" + watch.getTime() + "ms");
     }

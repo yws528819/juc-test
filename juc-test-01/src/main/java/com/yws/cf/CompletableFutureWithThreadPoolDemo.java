@@ -7,9 +7,11 @@ public class CompletableFutureWithThreadPoolDemo {
         ExecutorService threadPool = Executors.newFixedThreadPool(3);
         try {
             CompletableFuture<Void> completableFuture = CompletableFuture.supplyAsync(() -> {
+                //暂停几秒钟
+                try { TimeUnit.MILLISECONDS.sleep(20); } catch (Exception e){ e.printStackTrace(); }
                 System.out.println("1号任务" + "\t" + Thread.currentThread().getName());
                 return "abc";
-            }).thenRun(() -> {
+            }, threadPool).thenRunAsync(() -> {
                 System.out.println("2号任务" + "\t" + Thread.currentThread().getName());
             }).thenRun(() -> {
                 System.out.println("3号任务" + "\t" + Thread.currentThread().getName());

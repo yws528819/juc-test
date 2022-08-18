@@ -8,14 +8,15 @@ public class LockDownTest {
     public static void main(String[] args) {
         A a = new A();
         new Thread(() -> {
-            a.method1(10);
+            a.method1();
         }, "t1").start();
 
         //暂停几秒线程
         try{ TimeUnit.SECONDS.sleep(5); }catch (Exception e) { e.printStackTrace(); }
-        System.out.println("------------------5s-------------------");
+        System.out.println("------------------5s后，t2起飞-------------------");
+
         new Thread(() -> {
-            a.method1(20);
+            a.method2();
         }, "t2").start();
     }
 
@@ -26,27 +27,28 @@ public class LockDownTest {
 
 class A {
     ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    public volatile int a = 0;
 
-    public void method1(int val){
-        readWriteLock.readLock().lock();
-        System.out.println(Thread.currentThread().getName() + "---开头的读锁里进来了。。。");
-        readWriteLock.readLock().unlock();
-
+    public void method1() {
         readWriteLock.writeLock().lock();
-        System.out.println(Thread.currentThread().getName() + "---进来了。。。");
-        a = val;
         readWriteLock.readLock().lock();
-        System.out.println(a);
+
 
         readWriteLock.writeLock().unlock();
+
+        //********降级需要等写锁释放了，其他线程才能拿到读锁************
+        System.out.println(Thread.currentThread().getName() + "\t 锁降级了，写锁已释放，我睡10s");
         //暂停几秒线程
-        System.out.println(Thread.currentThread().getName() + "---（写锁释放了才有效果）理论上锁已经降级了。。。。暂停10s");
         try{ TimeUnit.SECONDS.sleep(10); }catch (Exception e) { e.printStackTrace(); }
-        System.out.println(Thread.currentThread().getName() + "---睡眠完毕");
+        System.out.println(Thread.currentThread().getName() + "\t 我醒了，没在等我吧...");
 
         readWriteLock.readLock().unlock();
+        System.out.println(Thread.currentThread().getName() + "\t 运行结束");
+    }
 
-        System.out.println(Thread.currentThread().getName() + "---运行完毕");
+    public void method2() {
+        readWriteLock.readLock().lock();
+        System.out.println(Thread.currentThread().getName() + "\t 拿到读锁了，进来了...");
+        readWriteLock.readLock().unlock();
+        System.out.println(Thread.currentThread().getName() + "\t 运行结束");
     }
 }
